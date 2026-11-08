@@ -1,0 +1,45 @@
+{
+  "verified_at": "2026-11-08",
+  "scope": "Disposable isolated platform; synthetic fixture only",
+  "source_sha256": "4a1dc67f7b86e2dfed2942e94e03c9583ffb621d01565752329702dc8a64e419",
+  "source_hash_method": "Sorted relative paths followed by bytes: src/**/*.py, scripts/*.py, docker/* regular files, compose.yaml, pyproject.toml, uv.lock, configs/projects.json",
+  "versions": {
+    "python": "3.12.16",
+    "prefect": "3.9.2",
+    "mlflow": "3.18.0",
+    "postgresql": "17.11",
+    "seaweedfs": "4.52"
+  },
+  "unit_tests": {
+    "passed": 4
+  },
+  "lint_and_format": "passed",
+  "compose_configuration": "passed",
+  "integration": {
+    "project_id": "iceberg",
+    "mlflow_run_id": "443719d8442d48f39df25670a8ea27a4",
+    "logical_run_id": "ea319425-7ac6-4120-ba1d-39bd6b54035b",
+    "prefect_flow_run_id": "e93e9146-5f54-48dd-9032-c246ab8702d3",
+    "artifact_sha256": "e69024a783fd876f4d92d0e3e835a9c7d935bb44a7e6de4cb0ec866cedc62cd0",
+    "artifact_uri": "mlflow-artifacts:/projects/iceberg/443719d8442d48f39df25670a8ea27a4/artifacts/model/model.json",
+    "object_key": "projects/iceberg/443719d8442d48f39df25670a8ea27a4/artifacts/model/model.json",
+    "flow_state": "Completed",
+    "completed_tasks": 3,
+    "failure_propagation_verified": true,
+    "anonymous_access_rejected": true,
+    "prefect_ui_verified": true,
+    "run_kind": "infrastructure_fixture",
+    "status": "verified",
+    "persistence_verified": true
+  },
+  "server_side_s3_hash_verified_before_and_after_recreation": true,
+  "temporary_resources_removed": true,
+  "existing_services_modified": false,
+  "not_verified": [
+    "Backup archive restoration",
+    "Competition image execution via the Docker workflow example",
+    "Optional process-worker deployment",
+    "Adoption or upgrade of the existing production Prefect deployment",
+    "Python 3.13 runtime"
+  ]
+}

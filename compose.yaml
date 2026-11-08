@@ -1,0 +1,166 @@
+name: mlops-platform
+
+x-runtime: &runtime
+  image: mlops-platform/runtime:0.1.0
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+  environment: &environment
+    PREFECT_HOME: /tmp/prefect
+    PREFECT_SERVER_ANALYTICS_ENABLED: "false"
+    PREFECT_API_URL: http://prefect:4200/api
+    MLFLOW_TRACKING_URI: http://mlflow:5000
+    MLFLOW_SERVER_ENABLE_JOB_EXECUTION: "false"
+    MLFLOW_ENABLE_ASSISTANT_SANDBOX: "true"
+    MLFLOW_ENABLE_ASYNC_LOGGING: "false"
+    AWS_EC2_METADATA_DISABLED: "true"
+    OPENBLAS_NUM_THREADS: "1"
+    OMP_NUM_THREADS: "1"
+    MKL_NUM_THREADS: "1"
+  read_only: true
+  tmpfs: ["/tmp:size=512m,mode=1777"]
+  cap_drop: [ALL]
+  cap_add: [DAC_OVERRIDE]
+  security_opt: [no-new-privileges:true]
+  pids_limit: 256
+
+services:
+  postgres:
+    image: postgres:17.11-bookworm@sha256:665dc7b37ac52a17e298511414c21d23ffa4e6a6ef6225b3e5d59c7afb35e994
+    entrypoint: [/bin/sh, /opt/platform/postgres-entrypoint.sh]
+    command: [postgres]
+    environment:
+      POSTGRES_USER: platform
+      POSTGRES_DB: platform
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets: [postgres_password, mlflow_db_password, prefect_db_password]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres-entrypoint.sh:/opt/platform/postgres-entrypoint.sh:ro
+      - ./docker/init-db.sh:/docker-entrypoint-initdb.d/10-platform.sh:ro
+    networks: [backend]
+    cpus: 0.5
+    mem_limit: 512m
+    pids_limit: 128
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, pg_isready, -U, platform, -d, platform]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  seaweed:
+    image: chrislusf/seaweedfs:4.52@sha256:57877e32bb90073b37dc109b438ba66e84fd5ed9ced5f5c04f56444ef243ce59
+    user: "0:0"
+    entrypoint: [/usr/bin/weed]
+    working_dir: /data
+    command: [-logtostderr=true, server, -dir=/data, -ip=seaweed, -filer, -s3,
+              -s3.config=/run/secrets/seaweed_s3_config, -volume.max=16,
+              -master.volumeSizeLimitMB=256]
+    secrets: [seaweed_s3_config]
+    volumes:
+      - seaweed_data:/data
+      - ./docker/filer.toml:/etc/seaweedfs/filer.toml:ro
+      - ./docker/master.toml:/etc/seaweedfs/master.toml:ro
+    networks: [backend]
+    cpus: 0.5
+    mem_limit: 768m
+    pids_limit: 128
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, curl, --silent, --show-error, --max-time, "2", --output, /dev/null, "http://127.0.0.1:8333/"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  mlflow:
+    <<: *runtime
+    command: [mlflow]
+    environment:
+      <<: *environment
+      MLFLOW_S3_ENDPOINT_URL: http://seaweed:8333
+    secrets: [mlflow_db_password, mlflow_password, flask_secret, seaweed_s3_config]
+    ports: ["127.0.0.1:${MLFLOW_PORT:-5501}:5000"]
+    networks: [backend, clients]
+    depends_on:
+      postgres: {condition: service_healthy}
+      seaweed: {condition: service_healthy}
+    cpus: 1.0
+    mem_limit: 1536m
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, docker/entrypoint.py, health, mlflow]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 30s
+
+  prefect:
+    <<: *runtime
+    command: [prefect]
+    environment:
+      <<: *environment
+      PREFECT_SERVER_UI_API_URL: http://127.0.0.1:${PREFECT_PORT:-4201}/api
+      PREFECT_SERVER_UI_STATIC_DIRECTORY: /tmp/prefect-ui
+    secrets: [prefect_db_password, prefect_auth_string]
+    ports: ["127.0.0.1:${PREFECT_PORT:-4201}:4200"]
+    networks: [backend, clients]
+    depends_on:
+      postgres: {condition: service_healthy}
+    cpus: 1.0
+    mem_limit: 1536m
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, docker/entrypoint.py, health, prefect]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 30s
+
+  worker:
+    <<: *runtime
+    command: [worker]
+    profiles: [worker]
+    secrets: [prefect_auth_string, mlflow_password]
+    networks: [clients]
+    depends_on:
+      prefect: {condition: service_healthy}
+      mlflow: {condition: service_healthy}
+    cpus: 0.5
+    mem_limit: 768m
+    restart: unless-stopped
+
+  client:
+    <<: *runtime
+    command: [smoke]
+    profiles: [tools]
+    secrets: [prefect_auth_string, mlflow_password]
+    networks: [clients]
+    volumes:
+      - ${PLATFORM_RECEIPT_DIR:?Initialize platform state}:/receipts
+    depends_on:
+      prefect: {condition: service_healthy}
+      mlflow: {condition: service_healthy}
+    cpus: 0.5
+    mem_limit: 768m
+
+secrets:
+  postgres_password: {file: "${PLATFORM_SECRET_DIR:?Initialize platform state}/postgres_password"}
+  mlflow_db_password: {file: "${PLATFORM_SECRET_DIR:?Initialize platform state}/mlflow_db_password"}
+  prefect_db_password: {file: "${PLATFORM_SECRET_DIR:?Initialize platform state}/prefect_db_password"}
+  mlflow_password: {file: "${PLATFORM_SECRET_DIR:?Initialize platform state}/mlflow_password"}
+  prefect_auth_string: {file: "${PLATFORM_SECRET_DIR:?Initialize platform state}/prefect_auth_string"}
+  flask_secret: {file: "${PLATFORM_SECRET_DIR:?Initialize platform state}/flask_secret"}
+  seaweed_s3_config: {file: "${PLATFORM_SECRET_DIR:?Initialize platform state}/seaweed_s3_config.json"}
+
+volumes:
+  postgres_data: {}
+  seaweed_data: {}
+
+networks:
+  backend: {internal: true}
+  clients:
+    name: ${MLOPS_NETWORK_NAME:-mlops-platform_clients}
