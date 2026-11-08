@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mlops-platform"
+version = "0.1.0"
+description = "Local Prefect orchestration and MLflow artifact infrastructure"
+requires-python = ">=3.12,<3.14"
+license = "MIT"
+dependencies = [
+  "prefect==3.9.2",
+  "mlflow[auth]==3.18.0",
+  "boto3>=1.40,<2",
+  "psycopg2-binary>=2.9,<3",
+  "asyncpg>=0.30,<1",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.11,<1", "pyyaml>=6,<7"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mlops_platform"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
