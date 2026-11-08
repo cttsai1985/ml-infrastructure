@@ -78,13 +78,13 @@ Use a local secret manager or runtime file reader to provide credentials. Do not
 ```bash
 # Set the approved Prefect endpoint/authentication in the runner environment first.
 uv run python examples/project_flow.py \
-  --project-id iceberg --image 'your-image@sha256:<actual-image-digest>' \
+  --project-id iceberg --image 'sha256:<actual-local-image-id>' \
   --data /absolute/path/to/iceberg --output /absolute/path/to/run-output \
-  -- python -m iceberg.cli train --data-dir /data \
-  --config /app/configs/baseline.json --run-dir /outputs/run
+  -- train --data-dir /data \
+  --config /opt/iceberg/configs/baseline.json --run-dir /outputs/run
 ```
 
-The image digest placeholder must be replaced. `--serve` registers the canonical `local` deployment and keeps a runner available; `--network` explicitly opts into a client network. The default is no container network. This example requires a trusted host runner with Docker access. The server containers and default optional process worker have **no Docker socket**; do not grant a shared worker host-level Docker privileges merely to run the example. The example's command construction is unit tested; competition images have not been executed by this platform fixture.
+Replace the image placeholder with `docker image inspect iceberg-runtime:0.1 --format '{{.Id}}'` from the Iceberg checkout after building its runtime image. Registry references of the form `repository@sha256:<digest>` also work. Arguments after `--` are passed to the image's existing entry point; the Iceberg image already uses `iceberg`. `--serve` registers the canonical `local` deployment and keeps a runner available; `--network` explicitly opts into a client network. The default is no container network. This example requires a trusted host runner with Docker access. The server containers and default optional process worker have **no Docker socket**; do not grant a shared worker host-level Docker privileges merely to run the example. The example's command construction is unit tested; competition images have not been executed by this platform fixture.
 
 ## Operating boundaries
 

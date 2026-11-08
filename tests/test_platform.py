@@ -98,3 +98,10 @@ def test_project_runner_uses_argument_vector_and_no_secret_values(tmp_path, monk
     assert any(part.endswith("dst=/data,readonly") for part in args)
     with pytest.raises(ValueError, match="digest"):
         example.docker_command("iceberg", "example:latest", command, data, output, "none", "id")
+    local_image = "sha256:" + "b" * 64
+    local = example.docker_command("iceberg", local_image, ["train"], data, output, "none", "id")
+    assert local[-2:] == [local_image, "train"]
+    with pytest.raises(ValueError, match="digest"):
+        example.docker_command(
+            "iceberg", "--privileged@sha256:" + "a" * 64, command, data, output, "none", "id"
+        )

@@ -21,7 +21,7 @@ from mlops_platform.registry import load_registry
 def docker_command(project_id, image, command, data, output, network, flow_id):
     if project_id not in load_registry()["projects"]:
         raise ValueError("Unknown project ID")
-    if not re.fullmatch(r"[^\s]+@sha256:[0-9a-f]{64}", image):
+    if not re.fullmatch(r"(?:[a-z0-9][a-z0-9._/:-]*@sha256:|sha256:)[0-9a-f]{64}", image):
         raise ValueError("Use an immutable Docker image digest")
     if not command or any(not isinstance(part, str) or not part for part in command):
         raise ValueError("Provide a nonempty command argument vector")
