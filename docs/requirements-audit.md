@@ -1,6 +1,20 @@
 # Portfolio acceptance audit
 
-Reviewed: **2026-11-09** · Standard: [version 1.0](portfolio-standard.md).
+## Presentation update — standard 1.1
+
+The current primary display pairs **Public LB** and **Private LB** scores with
+**Public Top %**. Rank/team counts and ties remain in detailed source evidence;
+they are no longer repeated in the README table or GitHub description. Private
+scores do not inherit public percentiles. This supersedes the canary-2 presentation
+format reviewed below; its historical regression and source-preservation review
+remain dated evidence. Local reproducibility may use scientific functions, a
+notebook, script or existing thin command entry point; no bespoke CLI is required.
+The existing canary-2 releases and completed merge/branch cleanup remain intact.
+The original profile/standard are retained at `v0.2.0-canary.2`; the current
+profile receipt records the latest approved compact description.
+
+
+Reviewed: **2026-11-09** · Standard: [version 1.1](portfolio-standard.md).
 The shared repository remains **ml-infrastructure**; renaming is paused. This
 review changes the evidence contract and its check, not deployed services.
 
