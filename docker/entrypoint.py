@@ -156,9 +156,12 @@ def main():
     elif command in {"smoke", "verify", "bootstrap"}:
         client_environment()
         if command == "bootstrap":
-            from mlops_platform.registry import bootstrap_experiments
+            from mlops_platform.registry import ensure_experiment
 
-            print(json.dumps(bootstrap_experiments()))
+            if len(sys.argv) != 3:
+                raise SystemExit("bootstrap requires an explicit client contract JSON file")
+            contract = json.loads(Path(sys.argv[2]).read_text())
+            print(json.dumps({"experiment_id": ensure_experiment(contract)}))
         else:
             from mlops_platform.smoke import main as smoke_main
 

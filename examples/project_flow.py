@@ -15,12 +15,11 @@ from pathlib import Path
 from prefect import flow, task
 from prefect.runtime import flow_run
 
-from mlops_platform.registry import load_registry
+from mlops_platform.registry import validate_project_id
 
 
 def docker_command(project_id, image, command, data, output, network, flow_id):
-    if project_id not in load_registry()["projects"]:
-        raise ValueError("Unknown project ID")
+    validate_project_id(project_id)
     if not re.fullmatch(r"(?:[a-z0-9][a-z0-9._/:-]*@sha256:|sha256:)[0-9a-f]{64}", image):
         raise ValueError("Use an immutable Docker image digest")
     if not command or any(not isinstance(part, str) or not part for part in command):
@@ -94,6 +93,8 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--network", default="none")
     parser.add_argument("--serve", action="store_true")
+    parser.add_argument("--flow-name", required=True, help="Client-owned Prefect flow name")
+    parser.add_argument("--deployment", help="Client-owned deployment name; required with --serve")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     if not os.environ.get("PREFECT_API_URL"):
@@ -109,10 +110,11 @@ def main():
     if values["command"] and values["command"][0] == "--":
         values["command"] = values["command"][1:]
     docker_command(**values, flow_id="preflight")
-    project = load_registry()["projects"][args.project_id]
-    configured = project_flow.with_options(name=project["prefect_flow"])
+    if args.serve and not args.deployment:
+        parser.error("--serve requires --deployment")
+    configured = project_flow.with_options(name=args.flow_name)
     if args.serve:
-        configured.serve(name=project["prefect_deployment"], parameters=values, limit=1)
+        configured.serve(name=args.deployment, parameters=values, limit=1)
     else:
         configured(**values)
 

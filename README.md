@@ -1,108 +1,94 @@
 # MLOps Platform
 
-Shared execution and artifact services for applied-science projects. The solution repositories consume these capabilities; their modeling decisions and experimental conclusions remain their responsibility.
+Shared infrastructure for applied ML: run research and batch workflows with Prefect, track and retrieve model artifacts with MLflow, and serve packaged models through MLflow Model Serving. PostgreSQL holds service metadata and SeaweedFS stores artifact bytes.
 
-**The useful question is whether another person can inspect, run and recover a model workflow.** Installing Prefect, MLflow and object storage is only part of that answer.
+Solutions own their scientific code, model packages and deployment requests. They consume service interfaces; the infrastructure has no catalog of solution repositories or prescribed project names. Adding a client does not require a platform release.
 
-| What is demonstrated | Where to inspect it |
-|---|---|
-| A real saved Iceberg model evaluated and used for a full 8,424-row prediction batch | [Batch operations case study](docs/batch-operations.md) and its aggregate receipt |
-| A failed dependency blocks delivery; repair resumes verified computation without repeating it | Stage receipts, private logs, incident state and retry/reuse evidence in the case study |
-| A rejected quality gate prevents candidate prediction/publication | Separate rejection drill with observed metric and downstream absence |
-| Model artifacts remain identifiable across local execution, offline Kaggle and shared storage | Solution manifests, logical IDs and checksum readback |
-| Infrastructure clients avoid database/S3 credentials | MLflow artifact proxy, separate client/backend networks and isolated integration tests |
-
-This is a **single-host reference and batch-operations demonstration**, not a claim of continuously operated production models. [The capability assessment](docs/mlops-assessment.md) maps implemented controls, consumer responsibilities and remaining production gaps to Google's MLOps framework.
+The production target covers **both batch operation and online prediction**. The [requirements and acceptance record](docs/requirements.md) separates that target from capabilities already verified, and identifies the hosting, service objectives and operating decisions still needed. [Design decisions](docs/design-decisions.md) explain the topology, resource budgets and deployment boundaries.
 
 ```mermaid
 flowchart LR
-    S[Solution: hypothesis, ablation and model evidence] --> C[Consumer contract: inputs, evaluation and outputs]
-    C --> P[Prefect: task execution and recovery]
-    P --> M[MLflow: experiment and artifact delivery]
-    M --> O[SeaweedFS: artifact bytes]
-    P --> L[Stage logs, status and incident evidence]
-    K[Offline Kaggle run bundle] --> C
+    C[Client-owned workflow and model package] --> P[Prefect: batch execution]
+    C --> M[MLflow: tracking, artifacts and registry]
+    P --> M
+    M --> S[SeaweedFS: artifact bytes]
+    M --> R[Separate MLflow serving runtime]
+    A[Authenticated application access] --> R
+    P --> E[Logs, metrics, alerts and recovery evidence]
+    R --> E
 ```
 
-The existing shared MLflow deployment is adopted without replacing its data. Local clients use `http://127.0.0.1:5500`; existing PostgreSQL and SeaweedFS volumes remain untouched. The separately managed production Prefect installation is outside this repository's operational ownership. The Compose stack is a tested reference for fresh deployments; the operational drill uses a disposable isolated instance. See [deployment ownership](docs/adoption.md).
+The diagram describes the target architecture. The current batch/artifact controls have integration evidence; the authenticated serving path and broader production operations have outstanding acceptance work listed in the requirements.
 
-Clients need application endpoints and authentication, not database passwords or S3 keys. Offline Kaggle runs export evidence for later import without requiring access to private infrastructure. W&B is optional and is not implemented as an authoritative tracker here.
+## Connect an application
 
-## Project identities
+Applications receive approved MLflow and Prefect endpoints, application credentials and, for container clients, an approved client network. They do not receive database or S3 administration credentials. Each client owns its experiment, registered-model and deployment names, artifact namespace, workload environment and resource request.
 
-[configs/projects.json](configs/projects.json) is the authority for logical names. Clients use these stable names without importing platform configuration at runtime.
+An authorized operator can provision a client-supplied experiment contract using `mlops_platform.registry.ensure_experiment(contract)`. The helper accepts an explicit experiment name and artifact namespace, reuses a matching active experiment and rejects namespace drift. It neither grants access nor registers or deploys a model. [Contract example](configs/README.md).
 
-| Project | GitHub repository | MLflow experiment | Prefect deployment | Artifact namespace |
-|---|---|---|---|---|
-| Iceberg | [kaggle-iceberg-solution-mlops](https://github.com/cttsai1985/kaggle-iceberg-solution-mlops) | `kaggle/iceberg` | `kaggle-iceberg/local` | `projects/iceberg` |
-| Home Credit | [kaggle-home-credit-solution-mlops](https://github.com/cttsai1985/kaggle-home-credit-solution-mlops) | `kaggle/home-credit` | `kaggle-home-credit/local` | `projects/home-credit` |
-| QUEST | [kaggle-quest-solution-mlops](https://github.com/cttsai1985/kaggle-quest-solution-mlops) | `kaggle/quest` | `kaggle-quest/local` | `projects/quest` |
-| Mercedes-Benz | [kaggle-mercedes-benz-solution-mlops](https://github.com/cttsai1985/kaggle-mercedes-benz-solution-mlops) | `kaggle/mercedes-benz` | `kaggle-mercedes-benz/local` | `projects/mercedes-benz` |
-| Quant research collection | [kaggle-quant-collections](https://github.com/cttsai1985/kaggle-quant-collections) | `kaggle/quant-research` | `kaggle-quant-research/local` | `projects/quant-research` |
+Existing installations retain their current endpoints and identities. The audited shared MLflow endpoint is `http://127.0.0.1:5500`; the separately managed Prefect installation has not been adopted by this repository. [Existing deployment and adoption](docs/adoption.md).
 
-Prefect deployment names and registered-model names (`kaggle-<project>`) are reserved conventions, not a claim that every project has been deployed or promoted. The collection may use `kaggle/quant-research/<competition-slug>` child experiments and competition/solution tags; existing experiment names remain valid historical records.
+## Deploy the infrastructure
 
-The portable stack provisions experiments with `mlflow-artifacts:/projects/<project>`. Its physical bucket is `mlops-artifacts`. The adopted deployment keeps its existing `mlflow` bucket: proxy URIs let clients retain the same logical namespace without a storage migration.
+Host requirements: Docker Engine with Compose and Python 3.12 or 3.13 on Linux or WSL. The checkout-local launcher uses only Python's standard library; starting containers does not install the service SDKs on the host. Initial image builds require internet access. Python dependencies inside the runtime image are locked separately.
 
-## Verify the platform
+```bash
+./infra deploy
+```
 
-Requirements: Docker Engine with Compose, Python 3.12 or 3.13, and [uv](https://docs.astral.sh/uv/). The first build requires internet access to download pinned container images and locked dependencies. The local verification flow creates temporary service credentials automatically.
+This explicit operation checks Docker, creates protected state for a new deployment or validates existing state, checks Compose configuration, builds and starts services with readiness checks, then reports endpoints and credential-file paths. Repeating it reuses the recorded identity and credentials. Incomplete state is an error, not a reason to generate replacement passwords. Starting existing containers/volumes also requires the matching state ownership marker; unlabelled older deployments need a reviewed adoption rather than an automatic restart.
+
+```bash
+./infra status
+./infra logs mlflow --tail 100
+./infra logs prefect --follow
+./infra stop
+```
+
+`stop` removes the selected deployment's containers while retaining data volumes and credentials. `./infra check` validates existing state and Compose configuration without starting services; `./infra init` is available for deliberate preparation but is not a required first step. See `./infra deploy --help` for separate named state and port options. Relative state paths resolve against this checkout, even when the launcher is called from another directory.
+
+Defaults use ports **5501** for MLflow and **4201** for Prefect, avoiding the audited shared services. Credential values are never printed; their files are under `.local/development/secrets/`. The default deployment retains its established Compose and network names. New separately named deployments use scoped client networks; old state retains its stored network. A repository rename does not migrate running resources.
+
+Docker Compose remains the deployment engine. For native diagnostics, supply the recorded identity and state explicitly:
+
+```bash
+docker compose --project-name mlops-platform-development \
+  --env-file .local/development/compose.env --file compose.yaml ps
+```
+
+The launcher operates the Docker context selected by the operator. It does not provision a remote host or adopt an existing deployment automatically. Production deployment uses a reviewed target and configuration with the access, capacity and recovery requirements below.
+
+## Batch and online model execution
+
+Batch jobs run in client-owned, digest-pinned images with explicit resources, input/output mounts, deadlines and quality gates. [The batch runner](docs/batch-operations.md) records stage outcomes and reuses verified completed computation during recovery. Its recorded saved-model case is historical integration evidence; platform startup and CI use independent fixtures.
+
+[examples/project_flow.py](examples/project_flow.py) accepts client-supplied project, flow and deployment names. It requires an explicitly selected Prefect endpoint. Its opt-in host runner has Docker access; service containers and the optional process worker do not receive a Docker socket.
+
+Online prediction uses **MLflow Model Serving in a separate model runtime**, rather than adding model dependencies to the tracking server. The client supplies a supported MLflow Model, preprocessing, signature, input example and reproducible environment. Deployment resolves an exact model version and image; candidate prediction tests precede traffic switching, and rollback restores a verified prior deployment. Changing a registry alias alone is not a running-server rollout. [Serving contract and acceptance](docs/requirements.md#model-packaging-and-online-deployment).
+
+An artifact upload or checkpoint bundle is not automatically an MLflow Model. Current tracking and batch receipts do not claim that an authenticated model endpoint, rollout or rollback has been deployed.
+
+## Production operating requirements
+
+Private database/storage networks and loopback application bindings provide the current access boundary. Production exposure needs the selected TLS/authentication boundary, including the prediction endpoint. Health checks and stage logs are present; service/request metrics, alert delivery, off-host backups and a measured restoration drill remain acceptance requirements.
+
+The checked-in CPU, memory and storage settings are deployment defaults, not throughput or capacity guarantees. Service processes, batch workloads and model-serving runtimes need separate measured budgets. In particular, the small SeaweedFS storage configuration must be sized against artifact growth and retention. [Sizing and boundary rationale](docs/design-decisions.md).
+
+Hosting, service ownership, availability and latency targets, batch deadlines, maintenance windows, recovery objectives and retention determine the production topology. Compose can remain the service engine when it meets those objectives; a particular cloud or Kubernetes deployment is not assumed. [Requirement status](docs/requirements.md#production-operation-and-evidence) · [Operations](docs/operations.md).
+
+## Develop and verify
+
+Development and host-side workflow execution additionally use [uv](https://docs.astral.sh/uv/):
 
 ```bash
 uv sync --locked
 uv run pytest -q
-uv run python scripts/manage.py smoke
+uv run python scripts/verify_model_serving.py --output .local/serving-check
+./infra verify
 ```
 
-The integration command creates a unique temporary Compose project and temporary secrets. It:
+The serving check packages a synthetic MLflow Model, checks health/schema/prediction parity and explicitly restarts the endpoint through v1 → v2 → v1. It tests runtime version selection and rollback, not zero-downtime traffic routing, authenticated ingress or a production model deployment.
 
-1. Starts PostgreSQL, SeaweedFS, MLflow and Prefect with health checks.
-2. Rejects anonymous API requests and checks the Prefect UI.
-3. Runs three Prefect tasks: fit a tiny synthetic model, log it to MLflow, and download/verify its bytes.
-4. Checks the actual SeaweedFS object from the server side, without granting the client storage credentials.
-5. Confirms an intentional task failure propagates to a failed flow.
-6. Recreates the containers, verifies the same run/task records and artifact again, then removes **only that temporary project's** containers, network and volumes.
+The isolated infrastructure verification command creates temporary service credentials and an independently named Compose deployment. It checks authenticated APIs, Prefect task execution and failure propagation, MLflow artifact-byte readback, the actual stored object, and persistence after container recreation. It removes only that test deployment's resources and retains a private receipt under `.local/`. CI runs the same test. Container recreation is distinct from restoring an off-host backup.
 
-The receipt stays under `.local/mlops-platform-smoke-*/receipts/`. CI runs the same test. These are infrastructure fixtures, not competition performance results. [Verification evidence](docs/verification.json) records the tested scope; backup restoration and actual competition training through Prefect are separate operational steps.
-
-## Fresh local deployment
-
-Use this only when there is no shared deployment to reuse, or during an explicitly planned adoption. `init` creates owner-only local secrets and refuses to overwrite existing state.
-
-```bash
-uv run python scripts/manage.py init
-uv run python scripts/manage.py config
-uv run python scripts/manage.py up
-uv run python scripts/manage.py status
-```
-
-Defaults deliberately avoid the already occupied shared-service ports:
-
-- MLflow: `http://127.0.0.1:5501`, username `platform`; password file `.local/development/secrets/mlflow_password`.
-- Prefect: `http://127.0.0.1:4201`; its UI accepts the authentication string in `.local/development/secrets/prefect_auth_string`.
-- Docker clients: network `mlops-platform_clients`; service endpoints `http://mlflow:5000` and `http://prefect:4200/api`.
-
-Use a local secret manager or runtime file reader to provide credentials. Do not commit credentials, embed them in URLs, or bake them into project images. `scripts/manage.py down` stops the named deployment and preserves its volumes. There is no general volume-pruning command.
-
-## Execute project containers
-
-[examples/project_flow.py](examples/project_flow.py) demonstrates the ownership boundary: a Prefect flow launches a digest-pinned project image with an argument vector, read-only data and writable outputs. The project image owns its CLI and ML dependencies. A nonzero container exit fails the task and flow. The output receipt carries the flow-run ID and exact image digest.
-
-```bash
-# Set the approved Prefect endpoint/authentication in the runner environment first.
-uv run python examples/project_flow.py \
-  --project-id iceberg --image 'sha256:<actual-local-image-id>' \
-  --data /absolute/path/to/iceberg --output /absolute/path/to/run-output \
-  -- train --data-dir /data \
-  --config /opt/iceberg/configs/baseline.json --run-dir /outputs/run
-```
-
-Replace the image placeholder with `docker image inspect iceberg-runtime:0.1 --format '{{.Id}}'` from the Iceberg checkout after building its runtime image. Registry references of the form `repository@sha256:<digest>` also work. Arguments after `--` are passed to the image's existing entry point; the Iceberg image already uses `iceberg`. `--serve` registers the canonical `local` deployment and keeps a runner available; `--network` explicitly opts into a client network. The default is no container network. This example requires a trusted host runner with Docker access. The server containers and default optional process worker have **no Docker socket**; do not grant a shared worker host-level Docker privileges merely to run the example. The example's command construction is unit tested; competition images have not been executed by this platform fixture.
-
-## Operating boundaries
-
-The four core containers are capped at 3 CPU cores and 4.25 GiB total memory; the optional process worker and transient client bring the declared maximum to 4 cores and 5.75 GiB. PostgreSQL and S3 ports are private. Application ports bind only to loopback. The default process worker (`--profile worker`) handles code already packaged in its image; it is not a universal training environment.
-
-This is a single-host development/reference deployment: no high availability, automated failover, TLS termination, organization identity provider, or multi-tenant isolation. MLflow's assistant sandbox is required but no Docker runtime is available inside that server, so assistant tool execution fails closed; model-job execution is disabled. A shared team or public endpoint needs a separately reviewed access and operations design.
-
-[Operations](docs/operations.md) covers backup consistency, restoration, upgrades, credentials, diagnostics, and the pinned upstream sources. W&B is an optional project-side mirror; no W&B service is hosted here, and MLflow remains the authoritative tracker and registry.
+[Verification receipts](docs/verification.json) retain their original source identities and scope. [Capability assessment](docs/mlops-assessment.md) records earlier evidence; the current [requirements](docs/requirements.md) govern the expanded production target. W&B remains an optional client-side integration rather than an authoritative platform dependency.

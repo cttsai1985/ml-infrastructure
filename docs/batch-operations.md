@@ -14,7 +14,7 @@ This is the design rationale for stage receipts, explicit retry scope and separa
 
 ## Run and observe
 
-[`src/mlops_platform/batch.py`](../src/mlops_platform/batch.py) executes a JSON stage declaration through Prefect. Each container stage has an immutable image, argument vector, read-only data mount, bounded CPU/memory, deadline and uniquely named container. A timeout or interrupt removes only that stage's container. The host runner needs Docker privileges; server containers do not receive its socket.
+[`src/mlops_platform/batch.py`](../src/mlops_platform/batch.py) executes a client-supplied JSON stage declaration through Prefect. `project_id` is a validated identifier, not a catalog lookup or authorization grant. `flow_name` belongs to the client; if omitted it defaults to the project ID. Existing clients can supply their existing flow name explicitly. Each container stage has an immutable image, argument vector, read-only data mount, bounded CPU/memory, deadline and uniquely named container. A timeout or interrupt removes only that stage's container. The host runner needs Docker privileges; server containers do not receive its socket.
 
 ```bash
 # Supply the approved Prefect URL/auth and, if needed, MLflow client environment.

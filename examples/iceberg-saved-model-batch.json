@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "project_id": "iceberg",
+  "flow_name": "kaggle-iceberg",
   "owner": "repository maintainer",
   "image": "sha256:b3f3644df271342c9cf6f4c9544b427286c91f4089f341c0006a9f10d644797f",
   "entrypoint": "python",

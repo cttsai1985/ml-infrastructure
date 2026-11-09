@@ -16,7 +16,7 @@ import uuid
 from pathlib import Path
 
 from mlops_platform.batch import execute
-from mlops_platform.registry import bootstrap_experiments
+from mlops_platform.registry import ensure_experiment
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--data", type=Path, required=True)
@@ -47,7 +47,10 @@ try:
         MLFLOW_TRACKING_PASSWORD=(state / "secrets/mlflow_password").read_text().strip(),
         PREFECT_SERVER_ALLOW_EPHEMERAL_MODE="false",
     )
-    bootstrap_experiments()
+    # This external integration drill supplies its own client contract.
+    ensure_experiment(
+        {"experiment_name": "kaggle/iceberg", "artifact_namespace": "projects/iceberg"}
+    )
     image = subprocess.check_output(
         ["docker", "image", "inspect", args.image, "--format", "{{.Id}}"], text=True
     ).strip()
@@ -58,6 +61,7 @@ try:
     cfg = {
         "schema_version": 1,
         "project_id": "iceberg",
+        "flow_name": "kaggle-iceberg",
         "owner": "repository maintainer",
         "image": image,
         "entrypoint": "python",

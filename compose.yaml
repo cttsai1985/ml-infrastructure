@@ -1,6 +1,10 @@
 name: mlops-platform
 
+x-ownership: &ownership
+  io.applied-ml.state: ${PLATFORM_STATE_FINGERPRINT:-unassigned}
+
 x-runtime: &runtime
+  labels: *ownership
   image: mlops-platform/runtime:0.1.0
   build:
     context: .
@@ -26,6 +30,7 @@ x-runtime: &runtime
 
 services:
   postgres:
+    labels: *ownership
     image: postgres:17.11-bookworm@sha256:665dc7b37ac52a17e298511414c21d23ffa4e6a6ef6225b3e5d59c7afb35e994
     entrypoint: [/bin/sh, /opt/platform/postgres-entrypoint.sh]
     command: [postgres]
@@ -50,6 +55,7 @@ services:
       retries: 40
 
   seaweed:
+    labels: *ownership
     image: chrislusf/seaweedfs:4.52@sha256:57877e32bb90073b37dc109b438ba66e84fd5ed9ced5f5c04f56444ef243ce59
     user: "0:0"
     entrypoint: [/usr/bin/weed]
@@ -157,8 +163,10 @@ secrets:
   seaweed_s3_config: {file: "${PLATFORM_SECRET_DIR:?Initialize platform state}/seaweed_s3_config.json"}
 
 volumes:
-  postgres_data: {}
-  seaweed_data: {}
+  postgres_data:
+    labels: *ownership
+  seaweed_data:
+    labels: *ownership
 
 networks:
   backend: {internal: true}
