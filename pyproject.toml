@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mlops-platform"
-version = "0.2.0.dev1"
+version = "0.2.0.dev2"
 description = "Local Prefect orchestration and MLflow artifact infrastructure"
 requires-python = ">=3.12,<3.14"
 license = "MIT"
