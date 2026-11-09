@@ -40,6 +40,7 @@ After the canary passes, the same selected model environment can run MLflow's fo
 
 ```bash
 export PATH=/absolute/path/to/model-environment/bin:"$PATH"
+export PYTHONDONTWRITEBYTECODE=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 python -m mlflow models serve \
   --model-uri /absolute/path/to/verified-model \
   --env-manager local --host 127.0.0.1 --port 8080 --workers 1
