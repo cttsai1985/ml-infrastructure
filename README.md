@@ -37,6 +37,7 @@ Clients need application endpoints and authentication, not database passwords or
 | Iceberg | [kaggle-iceberg-solution-mlops](https://github.com/cttsai1985/kaggle-iceberg-solution-mlops) | `kaggle/iceberg` | `kaggle-iceberg/local` | `projects/iceberg` |
 | Home Credit | [kaggle-home-credit-solution-mlops](https://github.com/cttsai1985/kaggle-home-credit-solution-mlops) | `kaggle/home-credit` | `kaggle-home-credit/local` | `projects/home-credit` |
 | QUEST | [kaggle-quest-solution-mlops](https://github.com/cttsai1985/kaggle-quest-solution-mlops) | `kaggle/quest` | `kaggle-quest/local` | `projects/quest` |
+| Mercedes-Benz | [kaggle-mercedes-benz-solution-mlops](https://github.com/cttsai1985/kaggle-mercedes-benz-solution-mlops) | `kaggle/mercedes-benz` | `kaggle-mercedes-benz/local` | `projects/mercedes-benz` |
 | Quant research collection | [kaggle-quant-collections](https://github.com/cttsai1985/kaggle-quant-collections) | `kaggle/quant-research` | `kaggle-quant-research/local` | `projects/quant-research` |
 
 Prefect deployment names and registered-model names (`kaggle-<project>`) are reserved conventions, not a claim that every project has been deployed or promoted. The collection may use `kaggle/quant-research/<competition-slug>` child experiments and competition/solution tags; existing experiment names remain valid historical records.

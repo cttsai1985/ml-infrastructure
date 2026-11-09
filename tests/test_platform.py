@@ -21,7 +21,13 @@ def load_script(name, path):
 
 def test_registry_identities_and_namespace_drift(tmp_path):
     registry = load_registry()
-    assert set(registry["projects"]) == {"iceberg", "home-credit", "quest", "quant-research"}
+    assert set(registry["projects"]) == {
+        "iceberg",
+        "home-credit",
+        "quest",
+        "mercedes-benz",
+        "quant-research",
+    }
     assert registry["projects"]["quant-research"]["scope"] == "collection"
     altered = copy.deepcopy(registry)
     altered["projects"]["quest"]["artifact_namespace"] = "projects/iceberg"

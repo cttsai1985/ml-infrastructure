@@ -5,6 +5,7 @@
     "iceberg": {"scope": "competition", "repository": "cttsai1985/kaggle-iceberg-solution-mlops", "mlflow_experiment": "kaggle/iceberg", "registered_model": "kaggle-iceberg", "prefect_flow": "kaggle-iceberg", "prefect_deployment": "local", "artifact_namespace": "projects/iceberg"},
     "home-credit": {"scope": "competition", "repository": "cttsai1985/kaggle-home-credit-solution-mlops", "mlflow_experiment": "kaggle/home-credit", "registered_model": "kaggle-home-credit", "prefect_flow": "kaggle-home-credit", "prefect_deployment": "local", "artifact_namespace": "projects/home-credit"},
     "quest": {"scope": "competition", "repository": "cttsai1985/kaggle-quest-solution-mlops", "mlflow_experiment": "kaggle/quest", "registered_model": "kaggle-quest", "prefect_flow": "kaggle-quest", "prefect_deployment": "local", "artifact_namespace": "projects/quest"},
+    "mercedes-benz": {"scope": "competition", "repository": "cttsai1985/kaggle-mercedes-benz-solution-mlops", "mlflow_experiment": "kaggle/mercedes-benz", "registered_model": "kaggle-mercedes-benz", "prefect_flow": "kaggle-mercedes-benz", "prefect_deployment": "local", "artifact_namespace": "projects/mercedes-benz"},
     "quant-research": {"scope": "collection", "repository": "cttsai1985/kaggle-quant-collections", "mlflow_experiment": "kaggle/quant-research", "registered_model": "kaggle-quant-research", "prefect_flow": "kaggle-quant-research", "prefect_deployment": "local", "artifact_namespace": "projects/quant-research"}
   }
 }
