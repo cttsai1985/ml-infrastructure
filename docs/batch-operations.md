@@ -4,6 +4,14 @@ The operational unit is a **versioned batch job**, not a notebook session. A suc
 
 The [real saved-model drill](batch-verification.json) uses the authorized Iceberg checkpoint and all 8,424 official test observations. It demonstrates orchestration of existing scientific artifacts; it does not claim the original training experiment was scheduled through Prefect.
 
+## Why these stages have separate success states
+
+The controlled drill first completes a valid model evaluation, then deliberately makes a downstream dependency unavailable. The scientific result survives while delivery remains blocked. Repairing that dependency should not create a new fitted model or a new evaluation population.
+
+The recovered flow therefore reuses the verified evaluation and performs prediction and delivery once, preserving all 8,424 expected IDs and checking model bytes after retrieval. A second run deliberately rejects the evaluation at a quality threshold. Its operational meaning is different: the candidate fails policy, while the evaluation remains useful evidence. The runner records both outcomes without converting them into an undifferentiated “job failed.”
+
+This is the design rationale for stage receipts, explicit retry scope and separate quality/readiness checks. The [receipt](batch-verification.json) binds that reasoning to observed states in an isolated saved-model fault drill. It does not establish operation of a live prediction service.
+
 ## Run and observe
 
 [`src/mlops_platform/batch.py`](../src/mlops_platform/batch.py) executes a JSON stage declaration through Prefect. Each container stage has an immutable image, argument vector, read-only data mount, bounded CPU/memory, deadline and uniquely named container. A timeout or interrupt removes only that stage's container. The host runner needs Docker privileges; server containers do not receive its socket.
