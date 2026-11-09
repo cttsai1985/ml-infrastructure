@@ -348,10 +348,23 @@ def deployment_summary(state: Path) -> None:
 
 
 def main(argv=None):
+    # Dispatch without importing the platform SDKs into the lightweight host CLI.
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if arguments[:2] == ["model", "verify"]:
+        import runpy
+
+        controller = runpy.run_path(str(ROOT / "src/mlops_platform/serving.py"))
+        controller["cli"](arguments[2:])
+        return
     parser = argparse.ArgumentParser(
         prog="./infra", description="Operate this checkout's local Docker Compose deployment."
     )
     commands = parser.add_subparsers(dest="action", required=True)
+    model_command = commands.add_parser(
+        "model", help="Verify a client model through an HTTP canary"
+    )
+    model_actions = model_command.add_subparsers(dest="model_action", required=True)
+    model_actions.add_parser("verify", help="Verify an exported model in its client Python runtime")
     descriptions = {
         "deploy": "Create or reuse protected state, validate and start services",
         "status": "Show services in the selected deployment",
@@ -460,6 +473,6 @@ def main(argv=None):
 if __name__ == "__main__":
     try:
         main()
-    except (ValueError, OSError, KeyError, subprocess.CalledProcessError) as error:
+    except (ValueError, OSError, KeyError, RuntimeError, subprocess.CalledProcessError) as error:
         print(f"Infrastructure operation failed: {error}", file=sys.stderr)
         raise SystemExit(1) from None

@@ -1,6 +1,6 @@
-# MLOps Platform
+# ML Infrastructure
 
-Shared infrastructure for applied ML: run research and batch workflows with Prefect, track and retrieve model artifacts with MLflow, and serve packaged models through MLflow Model Serving. PostgreSQL holds service metadata and SeaweedFS stores artifact bytes.
+Shared services for running ML workflows and using their models. Prefect coordinates batch work, MLflow tracks experiments and serves packaged models, PostgreSQL retains service metadata, and SeaweedFS stores artifact bytes.
 
 Solutions own their scientific code, model packages and deployment requests. They consume service interfaces; the infrastructure has no catalog of solution repositories or prescribed project names. Adding a client does not require a platform release.
 
@@ -57,6 +57,22 @@ docker compose --project-name mlops-platform-development \
 ```
 
 The launcher operates the Docker context selected by the operator. It does not provision a remote host or adopt an existing deployment automatically. Production deployment uses a reviewed target and configuration with the access, capacity and recovery requirements below.
+
+## Verify an application model
+
+Applications export their evaluated predictor as an MLflow Model with its code, signature, preprocessing and dependencies. Use the shared controller with that application's Python environment:
+
+```bash
+./infra model verify \
+  --model /absolute/path/to/exported-model \
+  --python /absolute/path/to/model-environment/bin/python \
+  --request /absolute/path/to/private-request.json \
+  --expected /absolute/path/to/native-predictions.json \
+  --invalid-request /absolute/path/to/invalid-request.json \
+  --output .local/application-canary
+```
+
+The controller serves a copied package from a fresh workspace, checks prediction parity and schema rejection, and records model/runtime identity and process cleanup. It needs no application catalog or client code in this repository. The model environment owns MLflow and inference dependencies; the controller itself uses Python's standard library. [Serving interface](docs/serving.md).
 
 ## Batch and online model execution
 

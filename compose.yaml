@@ -5,7 +5,7 @@ x-ownership: &ownership
 
 x-runtime: &runtime
   labels: *ownership
-  image: mlops-platform/runtime:0.1.0
+  image: ml-infrastructure/runtime:0.2.0-canary.1
   build:
     context: .
     dockerfile: docker/Dockerfile
