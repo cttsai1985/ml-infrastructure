@@ -46,7 +46,7 @@ The portable stack provisions experiments with `mlflow-artifacts:/projects/<proj
 
 ## Verify the platform
 
-Requirements: Docker Engine with Compose, Python 3.12 or 3.13, and [uv](https://docs.astral.sh/uv/). No Kaggle, cloud, or other external-account credentials are needed. The first build downloads pinned images and locked dependencies.
+Requirements: Docker Engine with Compose, Python 3.12 or 3.13, and [uv](https://docs.astral.sh/uv/). The first build requires internet access to download pinned container images and locked dependencies. The local verification flow creates temporary service credentials automatically.
 
 ```bash
 uv sync --locked
