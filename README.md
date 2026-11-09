@@ -72,7 +72,7 @@ Applications export their evaluated predictor as an MLflow Model with its code, 
   --output .local/application-canary
 ```
 
-The controller serves a copied package from a fresh workspace, checks prediction parity and schema rejection, and records model/runtime identity and process cleanup. It needs no application catalog or client code in this repository. The model environment owns MLflow and inference dependencies; the controller itself uses Python's standard library. [Serving interface](docs/serving.md).
+The controller serves a copied package from a fresh workspace, checks prediction parity and schema rejection, and records model/runtime identity and process cleanup. It needs no application catalog or client code in this repository. The model environment owns MLflow and inference dependencies; the controller itself uses Python's standard library. [Serving interface](docs/serving.md) · [Canary verification](docs/canary-validation.json).
 
 ## Batch and online model execution
 

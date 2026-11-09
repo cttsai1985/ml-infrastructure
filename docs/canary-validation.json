@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "release": "v0.2.0-canary.1",
+  "package_version": "0.2.0.dev1",
+  "source_commit": "f6d9fe64aeec6aec04edca3e368875a7a3b270fe",
+  "source_dirty_at_verification": false,
+  "unit_tests_passed": 27,
+  "generic_docker_integration": {
+    "project_id": "infrastructure-fixture",
+    "mlflow_run_id": "09049e6bd45747f2a9d8fe43093d1706",
+    "logical_run_id": "63efa6d6-ab21-43ea-8c6a-8480d78ee06a",
+    "prefect_flow_run_id": "8a1d4ba1-a50c-4332-a6a4-ab479ccc0048",
+    "artifact_sha256": "e69024a783fd876f4d92d0e3e835a9c7d935bb44a7e6de4cb0ec866cedc62cd0",
+    "artifact_uri": "mlflow-artifacts:/fixtures/smoke/09049e6bd45747f2a9d8fe43093d1706/artifacts/model/model.json",
+    "object_key": "fixtures/smoke/09049e6bd45747f2a9d8fe43093d1706/artifacts/model/model.json",
+    "flow_state": "Completed",
+    "completed_tasks": 3,
+    "failure_propagation_verified": true,
+    "anonymous_access_rejected": true,
+    "prefect_ui_verified": true,
+    "run_kind": "infrastructure_fixture",
+    "status": "verified",
+    "persistence_verified": true
+  },
+  "real_client_model_contracts_checked": 4,
+  "aggregate_model_parity": {
+    "request_rows": 18,
+    "numeric_outputs_compared": 76,
+    "all_passed": true,
+    "schema_rejection_status": 400,
+    "declared_package_digests_checked": true,
+    "fresh_workspace_copy_verified": true,
+    "cleanup_complete": true
+  },
+  "client_catalog_required": false,
+  "shared_services_modified": false,
+  "private_requests_or_weights_published": false,
+  "production_ingress_verified": false,
+  "containerized_model_deployment_verified": false,
+  "production_traffic_split_performed": false
+}
