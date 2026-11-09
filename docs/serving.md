@@ -34,6 +34,22 @@ The controller hashes the source package, copies it into a fresh private workspa
 
 The temporary server process group is terminated and its endpoint must be released before completion. This matters for version changes: a readiness request sent before an old server finishes stopping can observe the wrong model. The synthetic lifecycle check explicitly exercises v1 → v2 → v1; application checks compare the selected package to that application's native predictions.
 
+## Use the verified model
+
+After the canary passes, the same selected model environment can run MLflow's foreground serving command for an application or interactive test:
+
+```bash
+export PATH=/absolute/path/to/model-environment/bin:"$PATH"
+python -m mlflow models serve \
+  --model-uri /absolute/path/to/verified-model \
+  --env-manager local --host 127.0.0.1 --port 8080 --workers 1
+curl --fail http://127.0.0.1:8080/invocations \
+  -H 'Content-Type: application/json' \
+  --data-binary @/absolute/path/to/request.json
+```
+
+Keep the selected package unchanged and retain its verified digest. Run under the client's pinned environment with the model's measured resources; stop the foreground process after use. For a managed endpoint, supervise this same runtime through the selected deployment configuration and its access/health/traffic controls. The prediction process is separate from the MLflow tracking server.
+
 ## Evidence and release scope
 
 The private output directory retains the deployment receipt, copied workspace and server logs. Aggregate evidence includes controller/package/runtime fingerprints, request and expected-output hashes, parity counts/differences, schema-rejection status and cleanup. Publish aggregate evidence only after reviewing it; request rows and model weights remain private unless their release is separately authorized.
