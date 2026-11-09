@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "project_id": "iceberg",
+  "owner": "repository maintainer",
+  "image": "sha256:b3f3644df271342c9cf6f4c9544b427286c91f4089f341c0006a9f10d644797f",
+  "entrypoint": "python",
+  "input_files": [
+    "train.json",
+    "test.json",
+    "sample_submission.csv"
+  ],
+  "network": "mlops-platform_clients",
+  "cpus": 4,
+  "memory": "8g",
+  "stages": [
+    {
+      "name": "verify-source-model",
+      "command": [
+        "-m",
+        "iceberg.cli",
+        "verify",
+        "--run-dir",
+        "/outputs/model",
+        "--data",
+        "/data/train.json"
+      ],
+      "read_only": true,
+      "retries": 1,
+      "outputs": [
+        "model/model.pt",
+        "model/manifest.json"
+      ],
+      "timeout_seconds": 60
+    },
+    {
+      "name": "evaluate",
+      "command": [
+        "-c",
+        "import json;from pathlib import Path;from iceberg.runtime import evaluate;Path('/outputs/evaluation.json').write_text(json.dumps(evaluate(Path('/outputs/model/model.pt'),Path('/data/train.json'),device='cpu')))"
+      ],
+      "outputs": [
+        "evaluation.json"
+      ],
+      "timeout_seconds": 120
+    },
+    {
+      "name": "quality-gate",
+      "kind": "gate",
+      "checks": [
+        {
+          "path": "evaluation.json",
+          "metric": "validation_log_loss",
+          "max": 0.3
+        }
+      ]
+    },
+    {
+      "name": "predict",
+      "command": [
+        "-m",
+        "iceberg.cli",
+        "predict",
+        "--checkpoint",
+        "/outputs/model/model.pt",
+        "--data",
+        "/data/test.json",
+        "--output",
+        "/outputs/submission.csv",
+        "--device",
+        "cpu"
+      ],
+      "outputs": [
+        "submission.csv",
+        "submission.receipt.json"
+      ],
+      "timeout_seconds": 180
+    },
+    {
+      "name": "publish-candidate",
+      "command": [
+        "-c",
+        "import json,os;from pathlib import Path;from iceberg.tracking import track;Path('/outputs/import.json').write_text(json.dumps(track(Path('/outputs/model'),os.environ['MLFLOW_TRACKING_URI'])))"
+      ],
+      "publishes_candidate": true,
+      "outputs": [
+        "import.json"
+      ],
+      "timeout_seconds": 120
+    }
+  ]
+}

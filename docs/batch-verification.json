@@ -1,0 +1,182 @@
+{
+  "runner_source_sha256": "c33e39cbfa0e14871f82c986e00c4b3127bc3ae44f984f5361171f4c799a0463",
+  "schema_version": 1,
+  "scope": "actual saved-model batch operation; no new model fitting or production serving",
+  "image": "sha256:b3f3644df271342c9cf6f4c9544b427286c91f4089f341c0006a9f10d644797f",
+  "scientific_source_commit": "897bd39d8ba81bc96da623e694a929fbab15eb3f",
+  "checkpoint_sha256": "b31e3a261d6f720885e67a987697e9ded96b428404708401ff181999141f0317",
+  "input_sha256": {
+    "train.json": "a56756a2528a09b139dc2747e2e40d869f9da7a8c9df37b188b6163f6bfb8696",
+    "test.json": "b1334a65bd0ceb9a027c780ba222f1dfba4cc34bd6adffef2ef5ed0e22a002fd",
+    "sample_submission.csv": "9f29b3a08e97c0e7d6e80729211a7a15581a06c9214c1f76b8cff75f173f6d5e"
+  },
+  "evaluation": {
+    "validation_log_loss": 0.20119943330250195,
+    "validation_rows": 256,
+    "brier_score": 0.05558571091807355,
+    "probability_min": 0.005296709015965462,
+    "probability_max": 0.986631453037262,
+    "best_epoch": 23,
+    "missing_angle_log_loss": 0.06418053464769977,
+    "known_angle_log_loss": 0.21281120437494286
+  },
+  "test_rows": 8424,
+  "sample_submission_id_order_verified": true,
+  "prediction_sha256": "1a30d5ebcd188144de5706aaf6e2eb0c68beee1a4181df8693534c2f82e10520",
+  "first_failure": {
+    "stage": "dependency-check",
+    "prediction_and_publication_blocked": true
+  },
+  "recovery": {
+    "same_configuration": true,
+    "successful_evaluation_attempts": 1,
+    "dependency_total_attempts": 4,
+    "transient_retry_observed": true,
+    "resolved_incident_retained": true
+  },
+  "quality_rejection": {
+    "threshold": 0.1,
+    "prediction_and_publication_blocked": true
+  },
+  "idempotent_reexecution": {
+    "scientific_and_publication_stages_reused": true,
+    "readiness_dependency_rechecked": true,
+    "prediction_attempts": 1,
+    "publication_attempts": 1
+  },
+  "prefect_runs": [
+    {
+      "id": "d3cd0c6c-194c-46f5-a33c-e5b2cfb76d09",
+      "state": "Failed",
+      "tasks": [
+        {
+          "name": "dependency-check-490",
+          "state": "Failed",
+          "run_count": 2
+        },
+        {
+          "name": "quality-gate-2f0",
+          "state": "Completed",
+          "run_count": 1
+        },
+        {
+          "name": "evaluate-61b",
+          "state": "Completed",
+          "run_count": 1
+        },
+        {
+          "name": "verify-source-model-1d5",
+          "state": "Completed",
+          "run_count": 1
+        }
+      ]
+    },
+    {
+      "id": "45858bb0-7cac-4c39-bb8d-6382d835bb86",
+      "state": "Completed",
+      "tasks": [
+        {
+          "name": "publish-candidate-0ce",
+          "state": "Completed",
+          "run_count": 1
+        },
+        {
+          "name": "predict-8c7",
+          "state": "Completed",
+          "run_count": 1
+        },
+        {
+          "name": "dependency-check-77b",
+          "state": "Completed",
+          "run_count": 2
+        },
+        {
+          "name": "quality-gate-4ae",
+          "state": "Completed",
+          "run_count": 1
+        },
+        {
+          "name": "evaluate-217",
+          "state": "Completed",
+          "run_count": 1
+        },
+        {
+          "name": "verify-source-model-115",
+          "state": "Completed",
+          "run_count": 1
+        }
+      ]
+    },
+    {
+      "id": "0540254b-ba08-4ab6-a430-84425a352dc0",
+      "state": "Completed",
+      "tasks": [
+        {
+          "name": "publish-candidate-e8c",
+          "state": "Completed",
+          "run_count": 1
+        },
+        {
+          "name": "predict-6da",
+          "state": "Completed",
+          "run_count": 1
+        },
+        {
+          "name": "dependency-check-d6d",
+          "state": "Completed",
+          "run_count": 1
+        },
+        {
+          "name": "quality-gate-1d4",
+          "state": "Completed",
+          "run_count": 1
+        },
+        {
+          "name": "evaluate-56e",
+          "state": "Completed",
+          "run_count": 1
+        },
+        {
+          "name": "verify-source-model-138",
+          "state": "Completed",
+          "run_count": 1
+        }
+      ]
+    },
+    {
+      "id": "1161ba1d-b645-423e-8719-01767475d3c4",
+      "state": "Failed",
+      "tasks": [
+        {
+          "name": "quality-gate-f8d",
+          "state": "Failed",
+          "run_count": 1
+        },
+        {
+          "name": "evaluate-d6a",
+          "state": "Completed",
+          "run_count": 1
+        },
+        {
+          "name": "verify-source-model-265",
+          "state": "Completed",
+          "run_count": 1
+        }
+      ]
+    }
+  ],
+  "mlflow": {
+    "run_id": "6c97d8e685e642a486dd73da75707fc3",
+    "status": "FINISHED",
+    "artifact_readback_sha256": "b31e3a261d6f720885e67a987697e9ded96b428404708401ff181999141f0317"
+  },
+  "local_stage_events": {
+    "count": 31,
+    "reused_count": 8
+  },
+  "deployment": "unique disposable isolated Compose project; deleted after verification",
+  "limitations": [
+    "research gate threshold illustrates operational policy, not an independent accuracy claim",
+    "application auth and isolated storage tested; no production endpoint, SLA, alert delivery, continuous retraining or backup restore claim"
+  ]
+}
