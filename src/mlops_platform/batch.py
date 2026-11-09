@@ -25,7 +25,7 @@ from prefect.settings import (
     temporary_settings,
 )
 
-from mlops_platform.registry import load_registry
+from mlops_platform.registry import validate_project_id
 
 
 def digest(path):
@@ -67,8 +67,10 @@ def fingerprints(root, names):
 def validate_config(config):
     if config.get("schema_version") != 1:
         raise ValueError("Unsupported batch configuration")
-    if config["project_id"] not in load_registry()["projects"]:
-        raise ValueError("Unknown project")
+    validate_project_id(config["project_id"])
+    name = config.get("flow_name", config["project_id"])
+    if not isinstance(name, str) or not name.strip() or len(name) > 128 or not name.isprintable():
+        raise ValueError("Provide a printable client-owned flow name of at most 128 characters")
     if not 0 < config.get("cpus", 4) <= 8:
         raise ValueError("CPU allocation must be at most eight cores")
     if not re.fullmatch(r"(?:[1-9]|1[0-6])g", config.get("memory", "4g")):
@@ -351,6 +353,6 @@ def execute(config, data, output):
         if "PREFECT_API_AUTH_STRING" in os.environ:
             settings[PREFECT_API_AUTH_STRING] = os.environ["PREFECT_API_AUTH_STRING"]
         with temporary_settings(settings):
-            return batch_flow.with_options(name="kaggle-" + config["project_id"])(
+            return batch_flow.with_options(name=config.get("flow_name", config["project_id"]))(
                 config, data, output
             )

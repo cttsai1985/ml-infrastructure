@@ -16,7 +16,12 @@ from prefect.client.orchestration import get_client
 from prefect.client.schemas.filters import FlowRunFilter
 from prefect.runtime import flow_run
 
-from mlops_platform.registry import bootstrap_experiments, load_registry
+from mlops_platform.registry import ensure_experiment
+
+FIXTURE_CONTRACT = {
+    "experiment_name": "infrastructure/smoke",
+    "artifact_namespace": "fixtures/smoke",
+}
 
 
 @task(name="fit-fixture", persist_result=False)
@@ -30,17 +35,15 @@ def fit_fixture() -> dict:
 
 @task(name="record-model", persist_result=False)
 def record_model(model: dict, project_id: str, logical_id: str) -> dict:
-    project = load_registry()["projects"][project_id]
-    ids = bootstrap_experiments()
+    experiment_id = ensure_experiment(FIXTURE_CONTRACT)
     with mlflow.start_run(
-        experiment_id=ids[project_id],
+        experiment_id=experiment_id,
         run_name="platform-artifact-smoke",
         tags={
             "project_id": project_id,
             "logical_run_id": logical_id,
             "prefect.flow_run_id": flow_run.id,
             "run_kind": "infrastructure_fixture",
-            "repository": project["repository"],
         },
     ) as active:
         with tempfile.TemporaryDirectory() as directory:
@@ -56,7 +59,7 @@ def record_model(model: dict, project_id: str, logical_id: str) -> dict:
             "prefect_flow_run_id": flow_run.id,
             "artifact_sha256": digest,
             "artifact_uri": active.info.artifact_uri + "/model/model.json",
-            "object_key": project["artifact_namespace"]
+            "object_key": FIXTURE_CONTRACT["artifact_namespace"]
             + "/"
             + active.info.run_id
             + "/artifacts/model/model.json",
@@ -84,8 +87,8 @@ def verify_artifact(receipt: dict) -> dict:
     return receipt
 
 
-@flow(name="kaggle-iceberg", persist_result=False)
-def fixture_flow(project_id: str = "iceberg") -> dict:
+@flow(name="infrastructure-fixture", persist_result=False)
+def fixture_flow(project_id: str = "infrastructure-fixture") -> dict:
     return verify_artifact(record_model(fit_fixture(), project_id, str(uuid.uuid4())))
 
 

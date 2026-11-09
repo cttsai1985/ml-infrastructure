@@ -1,5 +1,7 @@
 # Operations
 
+The production target and outstanding acceptance evidence are tracked in [requirements](requirements.md). [Design decisions](design-decisions.md) explain deployment, sizing and workload boundaries.
+
 ## Dependency baseline
 
 Python packages resolve from `pyproject.toml` into `uv.lock`; containers install that lock. Base images are pinned by digest. The current tested portable baseline is:
@@ -47,7 +49,7 @@ dc exec -T postgres pg_dump -U platform -Fc prefect > "$platform_backup/prefect.
 dc stop seaweed
 ```
 
-While SeaweedFS is stopped, archive the entire `${platform_project}_seaweed_data` volume through a temporary read-only volume mount, including filer metadata and master/volume data. Store that archive with both SQL dumps, a checksum manifest, the Git revision, image digests, and an encrypted copy of the state secrets. Restart the named stack with `dc up -d --wait` after the snapshot. Treat SQL dumps as sensitive because they contain application identity and run metadata.
+While SeaweedFS is stopped, archive the entire `${platform_project}_seaweed_data` volume through a temporary read-only volume mount, including filer metadata and master/volume data. Store that archive with both SQL dumps, a checksum manifest, the Git revision, image digests, and an encrypted copy of the state secrets. Restart the named stack with `./infra up --state "$platform_state"` after the snapshot. Treat SQL dumps as sensitive because they contain application identity and run metadata.
 
 Restore into a **new isolated project** first. Recreate the declared database roles using matching saved secrets, restore both databases with `pg_restore`, and restore the complete SeaweedFS archive into that new project's empty storage volume. Start services with the pinned pre-backup versions. Retrieve a known run/model artifact and verify its recorded hash; query known Prefect flow/task records. Only after that drill should a production recovery procedure be considered validated. This release verifies container recreation/persistence, not a full backup-archive restore drill.
 
@@ -55,7 +57,7 @@ Restore into a **new isolated project** first. Recreate the declared database ro
 
 Change versions in a PR, regenerate the lock, run unit/config checks and the isolated integration test, then test upgrades against restored copies of real metadata. Database migrations can make a simple image rollback insufficient; rollback means restoring the compatible metadata/object snapshot and previous version pins. Existing deployed Prefect 3.8.1 is not upgraded by this repository's 3.9.2 reference.
 
-Use `uv run python scripts/manage.py status` to inspect the selected portable deployment. Inspect only that project's Compose logs when diagnosing it. Smoke failures retain private diagnostics under their `.local/mlops-platform-smoke-*/failure.log` before cleanup; the command exits nonzero. A deliberate failed fixture flow in a successful smoke is expected.
+Use `./infra status` to inspect the selected portable deployment. Inspect only that project's Compose logs when diagnosing it. Smoke failures retain private diagnostics under their `.local/mlops-platform-smoke-*/failure.log` before cleanup; the command exits nonzero. A deliberate failed fixture flow in a successful smoke is expected.
 
 | Symptom | First check |
 |---|---|

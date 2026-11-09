@@ -1,0 +1,3 @@
+#!/bin/sh
+# Checkout-local launcher: Docker service operation needs no Python project environment.
+exec python3 "$(dirname "$0")/scripts/manage.py" "$@"

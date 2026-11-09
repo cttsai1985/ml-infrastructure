@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "verified_at": "2026-11-09",
+  "source_commit": "e82ee4a2ea9b30e476a61da2ca69f7449cd71c1b",
+  "source_dirty_at_start": false,
+  "scope": "Generic client contracts, checkout-local operator lifecycle, isolated infrastructure and actual MLflow serving fixture",
+  "unit_tests": {
+    "passed": 22,
+    "lint": "passed",
+    "format": "passed"
+  },
+  "operator_cli": {
+    "host_project_sync_required": false,
+    "stdlib_launcher_outside_checkout": "verified",
+    "existing_secret_bytes_and_permissions_preserved": "verified",
+    "partial_and_conflicting_state_rejected": "verified",
+    "orphan_and_exact_unlabelled_volumes_rejected": "verified",
+    "foreign_state_stop_blocked": "verified",
+    "ambient_path_network_override_blocked": "verified",
+    "independent_named_networks": "verified",
+    "real_deploy_and_redeploy": "verified_in_isolated_compose_stack"
+  },
+  "generic_infrastructure": {
+    "project_id": "infrastructure-fixture",
+    "mlflow_run_id": "b26faa70033a400796828ebed6f1b800",
+    "logical_run_id": "5cfc9135-83a8-4048-b276-a364bda3ca61",
+    "prefect_flow_run_id": "665dc654-8a72-4892-8981-6f6b99d9f3fb",
+    "artifact_sha256": "e69024a783fd876f4d92d0e3e835a9c7d935bb44a7e6de4cb0ec866cedc62cd0",
+    "artifact_uri": "mlflow-artifacts:/fixtures/smoke/b26faa70033a400796828ebed6f1b800/artifacts/model/model.json",
+    "object_key": "fixtures/smoke/b26faa70033a400796828ebed6f1b800/artifacts/model/model.json",
+    "flow_state": "Completed",
+    "completed_tasks": 3,
+    "failure_propagation_verified": true,
+    "anonymous_access_rejected": true,
+    "prefect_ui_verified": true,
+    "run_kind": "infrastructure_fixture",
+    "status": "verified",
+    "persistence_verified": true
+  },
+  "model_serving": {
+    "schema_version": 1,
+    "status": "verified",
+    "run_kind": "infrastructure_fixture",
+    "engine": "MLflow Model Serving",
+    "mlflow_version": "3.18.0",
+    "environment": {
+      "python": "3.12.16",
+      "numpy": "2.5.4",
+      "pandas": "3.1.1"
+    },
+    "events": [
+      {
+        "selected_fixture_version": "v1",
+        "model_package_sha256": "f530ffdafc34dff7357b7c078a299e84e92dd0be56ffcc0f0fabfd1f20eeb6ed",
+        "health_status": 200,
+        "prediction_rows": 3,
+        "schema_rejection_status": 400,
+        "prediction_parity": true
+      },
+      {
+        "selected_fixture_version": "v2",
+        "model_package_sha256": "5b6b288aff243d47cc00f35ad12ad9bbd76d45748c9467822b067477a161cb8f",
+        "health_status": 200,
+        "prediction_rows": 3,
+        "schema_rejection_status": 400,
+        "prediction_parity": true
+      },
+      {
+        "selected_fixture_version": "v1",
+        "model_package_sha256": "f530ffdafc34dff7357b7c078a299e84e92dd0be56ffcc0f0fabfd1f20eeb6ed",
+        "health_status": 200,
+        "prediction_rows": 3,
+        "schema_rejection_status": 400,
+        "prediction_parity": true
+      }
+    ],
+    "restart_based_version_switch_and_rollback": true,
+    "zero_downtime_claimed": false,
+    "container_image_verified": false,
+    "production_ingress_verified": false,
+    "shared_services_modified": false
+  },
+  "cleanup": "Only the uniquely named smoke resources and the fixture serving process groups were removed; private local receipts retained.",
+  "existing_shared_services_modified": false,
+  "historical_receipts_modified": false,
+  "production_acceptance_remaining": [
+    "Select hosting, owners, users and numeric service/capacity/recovery objectives.",
+    "Package and validate each real model in its own immutable serving image/environment.",
+    "Implement and verify selected TLS/auth ingress and production traffic switch/rollback.",
+    "Configure request/service metrics, alert delivery and production capacity evidence.",
+    "Schedule off-host backups and demonstrate restoration against recovery objectives.",
+    "Review any operational adoption of existing deployments, especially unlabelled resources."
+  ]
+}

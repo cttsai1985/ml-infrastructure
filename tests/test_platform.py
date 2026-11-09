@@ -1,13 +1,11 @@
-import copy
 import importlib.util
-import json
 import stat
 from pathlib import Path
 
 import pytest
 import yaml
 
-from mlops_platform.registry import load_registry
+from mlops_platform.registry import ensure_experiment, validate_contract, validate_project_id
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -19,27 +17,40 @@ def load_script(name, path):
     return module
 
 
-def test_registry_identities_and_namespace_drift(tmp_path):
-    registry = load_registry()
-    assert set(registry["projects"]) == {
-        "iceberg",
-        "home-credit",
-        "quest",
-        "mercedes-benz",
-        "quant-research",
-    }
-    assert registry["projects"]["quant-research"]["scope"] == "collection"
-    altered = copy.deepcopy(registry)
-    altered["projects"]["quest"]["artifact_namespace"] = "projects/iceberg"
-    path = tmp_path / "projects.json"
-    path.write_text(json.dumps(altered))
-    with pytest.raises(ValueError, match="drift"):
-        load_registry(path)
-    altered = copy.deepcopy(registry)
-    altered["projects"]["quest"]["repository"] = altered["projects"]["iceberg"]["repository"]
-    path.write_text(json.dumps(altered))
-    with pytest.raises(ValueError, match="Duplicate"):
-        load_registry(path)
+def test_client_owned_names_without_catalog_and_namespace_drift():
+    from types import SimpleNamespace
+
+    contract = {"experiment_name": "team/new-task", "artifact_namespace": "team/models/new-task"}
+    validate_contract(contract)
+    validate_project_id("previously-unknown-client")
+
+    class Client:
+        experiment = None
+        calls = []
+
+        def get_experiment_by_name(self, name):
+            return self.experiment
+
+        def create_experiment(self, name, *, artifact_location):
+            self.calls.append((name, artifact_location))
+            self.experiment = SimpleNamespace(
+                experiment_id="17", artifact_location=artifact_location, lifecycle_stage="active"
+            )
+            return "17"
+
+    client = Client()
+    assert ensure_experiment(contract, client=client) == "17"
+    assert ensure_experiment(contract, client=client) == "17"
+    assert client.calls == [("team/new-task", "mlflow-artifacts:/team/models/new-task")]
+    changed = {**contract, "artifact_namespace": "elsewhere"}
+    with pytest.raises(ValueError, match="differs"):
+        ensure_experiment(changed, client=client)
+    assert len(client.calls) == 1
+    for namespace in ["../escape", "a/../b", "/absolute", "s3://bucket/key", "a//b"]:
+        with pytest.raises(ValueError, match="Invalid"):
+            validate_contract({**contract, "artifact_namespace": namespace})
+    with pytest.raises(ValueError, match="project ID"):
+        validate_project_id("--privileged")
 
 
 def test_runtime_secrets_are_owner_only_and_never_overwritten(tmp_path, monkeypatch):
