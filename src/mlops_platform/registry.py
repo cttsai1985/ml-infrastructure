@@ -4,7 +4,12 @@ import json
 import re
 from pathlib import Path
 
-REGISTRY = Path(__file__).resolve().parents[2] / "configs" / "projects.json"
+PACKAGE_REGISTRY = Path(__file__).with_name("projects.json")
+REGISTRY = (
+    PACKAGE_REGISTRY
+    if PACKAGE_REGISTRY.is_file()
+    else Path(__file__).resolve().parents[2] / "configs" / "projects.json"
+)
 
 
 def load_registry(path: Path = REGISTRY) -> dict:

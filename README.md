@@ -1,20 +1,32 @@
 # MLOps Platform
 
-One infrastructure repository for independently runnable ML projects. **Prefect records workflow execution; MLflow records experiments and model versions; PostgreSQL stores metadata; SeaweedFS stores model artifacts behind MLflow's HTTP proxy.** Training code, dependencies, datasets, and benchmark results remain in each project repository.
+Shared execution and artifact services for applied-science projects. The solution repositories consume these capabilities; their modeling decisions and experimental conclusions remain their responsibility.
 
-The shared deployment already used by the projects is being adopted without replacing its data. MLflow is available to local clients at `http://127.0.0.1:5500`; its existing PostgreSQL and SeaweedFS volumes remain untouched. A separately managed Prefect installation is outside this repository's operational ownership. The portable Compose stack below is a tested reference for fresh deployments, **not an instruction to launch a second permanent stack alongside existing services**. See [deployment ownership and adoption](docs/adoption.md).
+**The useful question is whether another person can inspect, run and recover a model workflow.** Installing Prefect, MLflow and object storage is only part of that answer.
+
+| What is demonstrated | Where to inspect it |
+|---|---|
+| A real saved Iceberg model evaluated and used for a full 8,424-row prediction batch | [Batch operations case study](docs/batch-operations.md) and its aggregate receipt |
+| A failed dependency blocks delivery; repair resumes verified computation without repeating it | Stage receipts, private logs, incident state and retry/reuse evidence in the case study |
+| A rejected quality gate prevents candidate prediction/publication | Separate rejection drill with observed metric and downstream absence |
+| Model artifacts remain identifiable across local execution, offline Kaggle and shared storage | Solution manifests, logical IDs and checksum readback |
+| Infrastructure clients avoid database/S3 credentials | MLflow artifact proxy, separate client/backend networks and isolated integration tests |
+
+This is a **single-host reference and batch-operations demonstration**, not a claim of continuously operated production models. [The capability assessment](docs/mlops-assessment.md) maps implemented controls, consumer responsibilities and remaining production gaps to Google's MLOps framework.
 
 ```mermaid
 flowchart LR
-    R[Project CLI or notebook] --> P[Prefect workflow records]
-    R --> M[MLflow tracking and registry]
-    P --> DB[(PostgreSQL: Prefect database)]
-    M --> MD[(PostgreSQL: MLflow database)]
-    M --> S[SeaweedFS S3 artifact store]
-    K[Offline Kaggle run bundle] --> R
+    S[Solution: hypothesis, ablation and model evidence] --> C[Consumer contract: inputs, evaluation and outputs]
+    C --> P[Prefect: task execution and recovery]
+    P --> M[MLflow: experiment and artifact delivery]
+    M --> O[SeaweedFS: artifact bytes]
+    P --> L[Stage logs, status and incident evidence]
+    K[Offline Kaggle run bundle] --> C
 ```
 
-Clients receive the MLflow and Prefect endpoints and their application credentials. They do not need database passwords or S3 keys. Offline Kaggle runs export evidence for a later import; private infrastructure is not required inside the hosted notebook.
+The existing shared MLflow deployment is adopted without replacing its data. Local clients use `http://127.0.0.1:5500`; existing PostgreSQL and SeaweedFS volumes remain untouched. The separately managed production Prefect installation is outside this repository's operational ownership. The Compose stack is a tested reference for fresh deployments; the operational drill uses a disposable isolated instance. See [deployment ownership](docs/adoption.md).
+
+Clients need application endpoints and authentication, not database passwords or S3 keys. Offline Kaggle runs export evidence for later import without requiring access to private infrastructure. W&B is optional and is not implemented as an authoritative tracker here.
 
 ## Project identities
 

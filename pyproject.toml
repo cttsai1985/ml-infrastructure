@@ -22,6 +22,9 @@ dev = ["pytest>=8,<10", "ruff>=0.11,<1", "pyyaml>=6,<7"]
 [tool.hatch.build.targets.wheel]
 packages = ["src/mlops_platform"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"configs/projects.json" = "mlops_platform/projects.json"
+
 [tool.ruff]
 target-version = "py312"
 line-length = 100
